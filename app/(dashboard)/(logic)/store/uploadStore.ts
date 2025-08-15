@@ -20,3 +20,5 @@ export const useUploadStore = create<UploadStore>((set) => ({
     setUploads: (uploads) => set({ uploads }),
     addUpload: (upload) => set((state) => ({ uploads: [...state.uploads, upload] })),
 }))
+
+export type { SyllabusUpload }

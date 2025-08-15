@@ -28,3 +28,5 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
     deleteAssignment: (id) => set((state) => ({ assignments: state.assignments.filter((a) => a.id !== id) })),
     getAssignmentsForCourse: (courseId: string) => get().assignments.filter((a) => a.course_id === courseId),
 }))
+
+export type { Assignment }

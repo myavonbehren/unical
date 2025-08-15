@@ -52,3 +52,5 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
 
     getCoursesForSemester: (semesterId: string) => get().courses.filter((c) => c.semester_id === semesterId),
 }))
+
+export type { Semester, Course }
