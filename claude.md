@@ -261,6 +261,31 @@ unical/
 • Deployment optimization
 
 ---
+## Security
+Please design and implement all features using secure system design patterns. Ensure:
+
+All user data is private and access is restricted based on role/permissions.
+
+Frontend code uses secure hooks (React/Next.js) without exposing API keys or sensitive logic to the client.
+
+Backend (API routes, middleware, or server components) enforces authentication and authorization with Supabase JWTs/session tokens.
+
+Database queries use RLS (Row Level Security) policies to prevent unauthorized access.
+
+Avoid storing secrets in the client, use environment variables securely.
+
+Follow the principle of least privilege for Supabase roles, keys, and API access.
+
+All sensitive data should be encrypted in transit (HTTPS) and, if possible, at rest in the DB.
+
+Add input validation and sanitization to prevent XSS, SQL injection, and CSRF attacks.
+
+Return only the minimum necessary data to the frontend.
+
+Please explain the reasoning behind each design choice and provide example code for both frontend hooks and backend handlers following these principles.”
+
+
+---
 
 ## Troubleshooting Common Issues
 
