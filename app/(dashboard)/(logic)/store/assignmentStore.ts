@@ -24,7 +24,7 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
     assignments: [],
     setAssignments: (assignments) => set({ assignments }),
     addAssignment: (assignment) => set((state) => ({ assignments: [...state.assignments, assignment] })),
-    updateAssignment: (assignment) => set((state) => ({ assignments: state.assignments.map((a) => a.id === assignment.id ? assignment : a) })),
+    updateAssignment: (assignment, updates) => set((state) => ({ assignments: state.assignments.map((a) => a.id === assignment.id ? { ...a, ...updates } : a) })),
     deleteAssignment: (id) => set((state) => ({ assignments: state.assignments.filter((a) => a.id !== id) })),
     getAssignmentsForCourse: (courseId: string) => get().assignments.filter((a) => a.course_id === courseId),
 }))
