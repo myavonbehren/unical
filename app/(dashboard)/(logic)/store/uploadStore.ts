@@ -1,19 +1,11 @@
 import { create } from 'zustand'
-
-interface SyllabusUpload {
-    id: string
-    course_id: string
-    filename: string
-    parsed_data: any
-    processing_status: 'pending' | 'processing' | 'completed' | 'failed'
-    uploaded_at: string
-}
+import type { SyllabusUpload, SyllabusUploadUpdate } from '../types/database'
 
 interface UploadStore {
     uploads: SyllabusUpload[]
     setUploads: (uploads: SyllabusUpload[]) => void
     addUpload: (upload: SyllabusUpload) => void
-    updateUpload: (id: string, updates: Partial<SyllabusUpload>) => void
+    updateUpload: (id: string, updates: SyllabusUploadUpdate) => void
     deleteUpload: (id: string) => void
     getUploadsByCourse: (courseId: string) => SyllabusUpload[]
 }
@@ -33,4 +25,3 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
 
 
 
-export type { SyllabusUpload }
