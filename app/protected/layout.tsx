@@ -1,6 +1,6 @@
 import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
+import { EnvVarWarning } from "@/app/shared/env-var-warning";
+import { AuthButton } from "@/app/auth/components/auth-button";
 import { ThemeSwitcher } from "@/app/shared/theme/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";

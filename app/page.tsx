@@ -1,7 +1,7 @@
 import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/app/hero";
+import { EnvVarWarning } from "@/app/shared/env-var-warning";
+import { AuthButton } from "@/app/auth/components/auth-button";
+import { Hero } from "@/app/shared/hero";
 import { ThemeSwitcher } from "@/app/shared/theme/theme-switcher";
 import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
 import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
