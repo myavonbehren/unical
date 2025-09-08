@@ -10,7 +10,7 @@ export default function Header() {
   const sidebar = useSidebarSafe();
 
   return (
-    <nav className="w-full flex h-[65px] ml-2 bg-background border-b border-border">
+    <nav className="w-full flex h-[65px] ml-0 md:ml-2 bg-background border-b border-border">
       <div className="w-full flex items-center px-5">
         {/* Mobile panel toggle - only visible on mobile */}
         <div className="md:hidden">
