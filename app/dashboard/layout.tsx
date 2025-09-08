@@ -22,7 +22,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [setIsMobile]);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden">
         {/* Sidebar */}
         <div 
           className={`
@@ -41,7 +41,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       
       {/* Main content area with header */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 h-full">
         {/* Mobile overlay */}
         {isMobile && !isCollapsed && (
           <div 
@@ -53,8 +53,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         {/* Header positioned next to sidebar */}
         <Header />
         
-        {/* Main content */}
-        <div className="flex-grow p-6 md:overflow-y-auto md:p-12 bg-background">
+        {/* Main content - scrollable */}
+        <div className="flex-1 overflow-y-auto p-3 md:p-8 bg-background">
           {children}
         </div>
         
