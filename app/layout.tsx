@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Poppins, Outfit } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
@@ -13,11 +13,20 @@ export const metadata: Metadata = {
   description: "Smart scheduling app that adapts to your academic life.",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   display: "swap",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  display: "swap",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 
 export default function RootLayout({
   children,
@@ -26,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${outfit.variable} ${poppins.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
