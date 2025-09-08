@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/app/shared/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/shared/ui/card'
 import { Badge } from '@/app/shared/ui/badge'
-import { useSemesters, useCourses, useAssignments, useWeekCalculation, useCurrentUser } from '@/app/(dashboard)/(logic)/hooks/useSupabase'
+import { useSemesters, useCourses, useAssignments, useWeekCalculation, useCurrentUser } from '@/app/dashboard/(logic)/hooks/useSupabase'
 
 export default function TestPage() {
   const [results, setResults] = useState<string[]>([])
@@ -231,11 +231,6 @@ export default function TestPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Database Test Page</h1>
-        <div className="flex gap-2">
-          <Badge variant={user ? 'default' : 'destructive'}>
-            {user ? `User: ${user.email}` : 'Not logged in'}
-          </Badge>
-        </div>
       </div>
 
       {/* Test Controls */}
