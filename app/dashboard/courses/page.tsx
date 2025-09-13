@@ -72,9 +72,11 @@ export default function CoursesPage() {
           <CoursesBreadcrumb semesterId={semesterId} className="text-lg" />
         </div>
 
-        <Button onClick={() => setIsModalOpen(true)}>
-          Add Course
-        </Button>
+        {semesterId && selectedSemester && courses.length > 0 && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            Add Course
+          </Button>
+        )} 
       </DashboardPageHeader>
       
       <DashboardPageContent>
