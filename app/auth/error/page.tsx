@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/shared/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/shared/components/ui/card";
 
 export default async function Page({
   searchParams,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "../../app/shared/ui/button";
+import { Button } from "@/app/shared/components/ui/button";
 
 const CopyIcon = () => (
   <svg

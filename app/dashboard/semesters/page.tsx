@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/app/shared/ui/button";
+import { Button } from "@/app/shared/components/ui/button";
 import SemesterGrid from "./(ui)/semester-grid";
 import AddSemesterModal from "./(ui)/add-semester-modal";
 import type { Semester } from '@/app/dashboard/(logic)/types/database';

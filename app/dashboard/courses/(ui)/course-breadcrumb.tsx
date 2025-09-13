@@ -1,6 +1,6 @@
 'use client'
 
-import Breadcrumb from '@/app/shared/ui/breadcrumb'
+import Breadcrumb from '@/app/shared/components/ui/breadcrumb'
 import { useAcademicStore } from '@/app/dashboard/(logic)/store/academicStore'
 import { useEffect, useState } from 'react'
 

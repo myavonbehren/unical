@@ -1,12 +1,12 @@
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react'
-import { Button } from '@/app/shared/ui/button'
+import { Button } from '@/app/shared/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Card, CardContent } from '@/app/shared/ui/card'
+} from '@/app/shared/components/ui/dropdown-menu'
+import { Card, CardContent } from '@/app/shared/components/ui/card'
 import { Course } from "../../(logic)/types/database"
 
 interface CourseCardProps {

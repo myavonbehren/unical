@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "../app/shared/ui/button";
+import { Button } from "@/app/shared/components/ui/button";
 
 export function DeployButton() {
   return (

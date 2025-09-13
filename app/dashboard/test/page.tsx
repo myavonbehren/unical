@@ -2,9 +2,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/app/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/shared/ui/card'
-import { Badge } from '@/app/shared/ui/badge'
+import { Button } from '@/app/shared/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/shared/components/ui/card'
+import { Badge } from '@/app/shared/components/ui/badge'
 import { useSemesters, useCourses, useAssignments, useWeekCalculation, useCurrentUser } from '@/app/dashboard/(logic)/hooks/useSupabase'
 
 export default function TestPage() {

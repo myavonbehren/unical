@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/app/shared/ui/button";
+import { Button } from "@/app/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/app/shared/ui/dropdown-menu";
+} from "@/app/shared/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "./logout-button";
 import { User, ChevronDown } from "lucide-react";

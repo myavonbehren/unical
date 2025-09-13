@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { ThemeSwitcher } from "@/app/shared/theme/theme-switcher";
 import { useSidebar } from './SidebarContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/components/ui/tooltip';
 
 export default function MobileSideNav() {
   const pathname = usePathname();
@@ -33,7 +33,7 @@ export default function MobileSideNav() {
       
       <div className="flex flex-col h-full">
         {/* Main navigation links */}
-        <div className="py-2">
+        <div className="py-2 space-y-2">
           <MobileNavLinks />
         </div>
         

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useAcademicStore } from '@/app/dashboard/(logic)/store/academicStore'
-import SemesterLoadingSkeleton from './semester-loading-skeleton'
+import { SemesterLoadingSkeleton } from '../../../shared/components/skeletons'
 import NoSemesters from './no-semesters'
 import SemesterCard from './semester-card'
-import { Button } from '@/app/shared/ui/button'
+import { Button } from '@/app/shared/components/ui/button'
 import { Semester } from '@/app/dashboard/(logic)/types/database'
 import AddSemesterModal from './add-semester-modal'
 import { spacingClasses } from '@/app/shared/design-tokens/spacing'
@@ -21,7 +21,6 @@ export default function SemesterGrid({ onEditSemester, onDeleteSemester }: Semes
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [hasEverLoaded, setHasEverLoaded] = useState(false) // Track if we've loaded data at least once
   const [minLoadingTime, setMinLoadingTime] = useState(true)
-  const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null)
 
   const { semesters, loading, error, fetchSemesters, deleteSemesterFromDB } = useAcademicStore()
 

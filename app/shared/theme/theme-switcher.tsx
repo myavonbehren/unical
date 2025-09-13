@@ -6,13 +6,13 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/app/shared/ui/dropdown-menu";
+} from "@/app/shared/components/ui/dropdown-menu";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useSidebarSafe } from "../layout/dashboard/SidebarContext";
 import clsx from "clsx";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/components/ui/tooltip';
 
 const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);

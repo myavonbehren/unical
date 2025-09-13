@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { ThemeSwitcher } from "@/app/shared/theme/theme-switcher";
 import { useSidebar } from './SidebarContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/app/shared/components/ui/tooltip';
 
 export default function SideNav() {
   const pathname = usePathname();

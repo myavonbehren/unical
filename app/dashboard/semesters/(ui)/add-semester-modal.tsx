@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Button } from '@/app/shared/ui/button'
+import { Button } from '@/app/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/app/shared/components/ui/dialog'
 import {
   Form,
   FormControl,
@@ -20,8 +20,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/app/shared/ui/input'
+} from '@/app/shared/components/ui/form'
+import { Input } from '@/app/shared/components/ui/input'
 import { useAcademicStore } from '@/app/dashboard/(logic)/store/academicStore'
 import type { SemesterInsert, Semester } from '@/app/dashboard/(logic)/types/database'
 import { Loader2 } from 'lucide-react'

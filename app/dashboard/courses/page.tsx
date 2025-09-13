@@ -7,7 +7,7 @@ import {
   DashboardPageHeader, 
   DashboardPageContent
 } from '@/app/shared/layout/dashboard'
-import { Button } from '@/app/shared/ui/button'
+import { Button } from '@/app/shared/components/ui/button'
 import { useAcademicStore } from '@/app/dashboard/(logic)/store/academicStore'
 import NoCoursesSemester from './(ui)/no-courses-semester'  
 import NoCoursesId from './(ui)/no-courses-id'
@@ -108,7 +108,6 @@ export default function CoursesPage() {
           />
         ) : (
           <CourseGrid
-            courses={courses}
             onEditCourse={handleEditCourse}
             onDeleteCourse={handleDeleteCourse}
           />
