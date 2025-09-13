@@ -9,6 +9,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
+import { useSidebar } from './SidebarContext';
 
 // Map of links to display in the side navigation.
 // Depending on the size of the application, this would be stored in a database.
@@ -21,11 +22,6 @@ const links = [
     href: '/dashboard/semesters',
     icon: CalendarIcon,
   },
-  {
-    name: 'Courses',
-    href: '/dashboard/courses',
-    icon: BookTextIcon,
-  },
   { name: 'Upload', 
     href: '/dashboard/upload', 
     icon: UploadIcon 
@@ -34,6 +30,7 @@ const links = [
 
 export default function MobileNavLinks() {
   const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   return (
     <>
@@ -41,6 +38,7 @@ export default function MobileNavLinks() {
         const LinkIcon = link.icon;
         return (
           <Link
+            onClick={toggleSidebar}
             key={link.name}
             href={link.href}
             className={clsx(
