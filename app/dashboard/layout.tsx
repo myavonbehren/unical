@@ -1,14 +1,14 @@
 "use client";
 
-import SideNav from '@/app/shared/layout/dashboard/SideNav';
-import MobileSideNav from '@/app/shared/layout/dashboard/MobileSideNav';
+import { SideNav, MobileSideNav, SidebarProvider, useSidebar } from '@/app/shared/layout/dashboard';
 import Header from '../shared/layout/Header';
-import Footer from '../shared/layout/Footer';
-import { SidebarProvider, useSidebar } from '../shared/layout/dashboard/SidebarContext';
 import { useEffect } from 'react';
+import { useStoreInitializer } from './(logic)/store/storeInitializer';
+import { spacingClasses } from '@/app/shared/design-tokens/spacing';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { isCollapsed, isMobile, setIsMobile } = useSidebar();
+  const { initializeStores } = useStoreInitializer();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -20,6 +20,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, [setIsMobile]);
+
+  // Initialize Zustand stores when dashboard loads
+  useEffect(() => {
+    initializeStores();
+  }, [initializeStores]);
 
   return (
     <div className="h-screen flex overflow-hidden">
@@ -54,7 +59,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <Header />
         
         {/* Main content - scrollable */}
-        <div className="flex-1 overflow-y-auto p-3 md:p-8 bg-background">
+        <div className={`flex-1 overflow-y-scroll ${spacingClasses.containerPadding} bg-background`}>
           {children}
         </div>
         
