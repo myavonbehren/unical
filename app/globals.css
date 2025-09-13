@@ -108,8 +108,12 @@
   * {
     @apply border-border;
   }
+  html, body {
+    height: 100%;
+  }
   body {
     @apply bg-background text-foreground font-sans;
+    overflow: hidden; /* Ensure only the app's main content area scrolls */
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
