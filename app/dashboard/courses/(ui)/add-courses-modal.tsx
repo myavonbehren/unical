@@ -215,7 +215,7 @@ export default function AddCourseModal({
                     <div className="flex items-center gap-2">
                       <Input 
                         type="color"
-                        className="w-12 h-10 p-1 border rounded"
+                        className="w-10 h-9 p-1 border rounded"
                         {...field}
                       />
                       <Input 
