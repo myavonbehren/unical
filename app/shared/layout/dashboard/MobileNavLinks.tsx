@@ -22,6 +22,11 @@ const links = [
     href: '/dashboard/semesters',
     icon: CalendarIcon,
   },
+  {
+    name: 'Courses',
+    href: '/dashboard/courses',
+    icon: BookTextIcon,
+  },
   { name: 'Upload', 
     href: '/dashboard/upload', 
     icon: UploadIcon 
