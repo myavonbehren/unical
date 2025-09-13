@@ -28,11 +28,13 @@ export default function SemesterCard({ semester, onEdit, onDelete, onClick }: Se
     })
   }
 
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent event bubbling to card click
     onEdit(semester)
   }
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent event bubbling to card click
     if (window.confirm(`Are you sure you want to delete "${semester.name}"? This action cannot be undone.`)) {
       onDelete(semester.id)
     }
@@ -58,6 +60,7 @@ export default function SemesterCard({ semester, onEdit, onDelete, onClick }: Se
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 hover:bg-muted"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">Open menu</span>
