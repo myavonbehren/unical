@@ -1,5 +1,5 @@
 // hooks/useSupabase.ts
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
@@ -17,7 +17,7 @@ import type {
   AssignmentUpdate,
   ParsedAssignment,
   WeekCalculation
-} from '@/app/(dashboard)/(logic)/types/database'
+} from '@/app/dashboard/(logic)/types/database'
 
 const supabase = createClient()
 
@@ -36,6 +36,8 @@ function useSupabaseQuery<T>() {
     // Return generic error messages to prevent information leakage
     const userMessage = error?.message?.includes('permission denied') 
       ? 'You do not have permission to perform this action'
+      : error?.message?.includes('Failed to fetch')
+      ? 'Unable to connect to the server. Please check your internet connection.'
       : 'An error occurred. Please try again.'
     
     setError(userMessage)
@@ -46,12 +48,23 @@ function useSupabaseQuery<T>() {
 
   // Check if user is authenticated
   const checkAuth = async (): Promise<string | null> => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setError('You must be logged in to perform this action')
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Auth error:', error)
+        setError('Authentication error. Please log in again.')
+        return null
+      }
+      if (!user) {
+        setError('You must be logged in to perform this action')
+        return null
+      }
+      return user.id
+    } catch (error) {
+      console.error('checkAuth error:', error)
+      setError('Unable to verify authentication. Please try again.')
       return null
     }
-    return user.id
   }
 
   return { data, setData, loading, setLoading, error, handleError, clearError, checkAuth }
@@ -61,28 +74,33 @@ function useSupabaseQuery<T>() {
 export function useSemesters() {
   const { data: semesters, setData: setSemesters, loading, setLoading, error, handleError, clearError, checkAuth } = useSupabaseQuery<Semester>()
 
-  const fetchSemesters = async () => {
-    const userId = await checkAuth()
-    if (!userId) return
-
-    setLoading(true)
-    clearError()
-    
+  const fetchSemesters = useCallback(async () => {
     try {
+      const userId = await checkAuth()
+      if (!userId) return
+
+      setLoading(true)
+      clearError()
+      
       const { data, error } = await supabase
         .from('semesters')
         .select('*')
         .eq('user_id', userId) // Filter by authenticated user
         .order('start_date', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
       setSemesters(data || [])
     } catch (error) {
+      console.error('fetchSemesters error:', error)
       handleError(error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const createSemester = async (semesterData: SemesterInsert): Promise<Semester | null> => {
     const userId = await checkAuth()
