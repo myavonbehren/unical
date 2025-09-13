@@ -65,6 +65,21 @@ export default function CoursesPage() {
     setIsModalOpen(true)
   }
 
+  const handleDeleteCourse = async (courseId: string) => {
+    if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      try {
+        const { deleteCourseFromDB } = useAcademicStore.getState()
+        await deleteCourseFromDB(courseId)
+        // Refresh courses after successful deletion
+        if (semesterId) {
+          fetchCourses(semesterId)
+        }
+      } catch (error) {
+        console.error('Failed to delete course:', error)
+      }
+    }
+  }
+
   return (
     <DashboardPage>
       <DashboardPageHeader>
@@ -95,6 +110,7 @@ export default function CoursesPage() {
           <CourseGrid
             courses={courses}
             onEditCourse={handleEditCourse}
+            onDeleteCourse={handleDeleteCourse}
           />
         )}
       </DashboardPageContent>
