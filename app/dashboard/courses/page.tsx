@@ -5,21 +5,23 @@ import { useSearchParams } from 'next/navigation'
 import { 
   DashboardPage, 
   DashboardPageHeader, 
-  DashboardPageContent, 
-  DashboardPageTitle 
+  DashboardPageContent
 } from '@/app/shared/layout/dashboard'
 import { Button } from '@/app/shared/ui/button'
 import { useAcademicStore } from '@/app/dashboard/(logic)/store/academicStore'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
 import NoCoursesSemester from './(ui)/no-courses-semester'  
 import NoCoursesId from './(ui)/no-courses-id'
+import AddCourseModal from './(ui)/add-courses-modal'
+import CoursesBreadcrumb from './(ui)/course-breadcrumb'
+import CourseGrid from './(ui)/course-grid'
 
 export default function CoursesPage() {
   const searchParams = useSearchParams()
   const semesterId = searchParams.get('semester')
   const { semesters, courses, fetchSemesters, fetchCourses } = useAcademicStore()
   const [selectedSemester, setSelectedSemester] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingCourse, setEditingCourse] = useState<any>(null)
 
   // Fetch data when component mounts
   useEffect(() => {
@@ -46,33 +48,36 @@ export default function CoursesPage() {
     })
   }
 
+  const handleModalClose = () => {
+    setIsModalOpen(false)
+    setEditingCourse(null)
+  }
+
+  const handleModalSuccess = () => {
+    // Refresh courses after successful creation/update
+    if (semesterId) {
+      fetchCourses(semesterId)
+    }
+  }
+
+  const handleEditCourse = (course: any) => {
+    setEditingCourse(course)
+    setIsModalOpen(true)
+  }
+
   return (
     <DashboardPage>
       <DashboardPageHeader>
-        <div>
-          <Link href="/dashboard/semesters">
-            <Button variant="ghost" size="default">
-              <ArrowLeft className="h-9 w-9" />
-            </Button>
-          </Link>
+        <div className="flex flex-col gap-2">
+          <CoursesBreadcrumb semesterId={semesterId} className="text-lg" />
         </div>
 
-        <Button>
+        <Button onClick={() => setIsModalOpen(true)}>
           Add Course
         </Button>
       </DashboardPageHeader>
       
       <DashboardPageContent>
-      <div className="ml-4">
-            <DashboardPageTitle>
-              {selectedSemester ? selectedSemester.name : 'Courses'}
-            </DashboardPageTitle>
-            {selectedSemester && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {formatDate(selectedSemester.start_date)} - {formatDate(selectedSemester.end_date)}
-              </p>
-            )}
-      </div>
         {!semesterId ? (
           <NoCoursesSemester />
         ) : !selectedSemester ? (
@@ -80,23 +85,26 @@ export default function CoursesPage() {
             <p className="text-muted-foreground">Loading semester...</p>
           </div>
         ) : courses.length === 0 ? (
-          <NoCoursesId semesterName={selectedSemester.name} />
+          <NoCoursesId 
+            semesterName={selectedSemester.name} 
+            onAddCourse={() => setIsModalOpen(true)}
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((course) => (
-              <div key={course.id} className="p-4 border rounded-lg hover:bg-accent transition-colors">
-                <h3 className="font-semibold text-lg mb-2">{course.name}</h3>
-                {course.code && (
-                  <p className="text-sm text-muted-foreground mb-2">{course.code}</p>
-                )}
-                {course.location && (
-                  <p className="text-sm text-muted-foreground">{course.location}</p>
-                )}
-              </div>
-            ))}
-          </div>
+          <CourseGrid
+            courses={courses}
+            onEditCourse={handleEditCourse}
+          />
         )}
       </DashboardPageContent>
+
+      {/* Add/Edit Course Modal */}
+      <AddCourseModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onSuccess={handleModalSuccess}
+        editingCourse={editingCourse}
+        semesterId={semesterId || undefined}
+      />
     </DashboardPage>
   )
 }
