@@ -67,8 +67,10 @@ export default function SemesterGrid({ onEditSemester, onDeleteSemester }: Semes
     // No need to manually refresh - Zustand store handles updates automatically
   }
 
+  const router = useRouter()
+
   const handleClick = (semester: Semester) => {
-    (`/dashboard/semesters/${semester.id}`)
+    router.push(`/dashboard/courses?semester=${semester.id}`)
   }
 
   // Show skeleton ONLY on very first load (never loaded + still in min time)
