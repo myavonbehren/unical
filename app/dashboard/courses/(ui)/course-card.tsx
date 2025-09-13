@@ -17,7 +17,7 @@ interface CourseCardProps {
 
 export default function CourseCard({ course, onEditCourse, onDeleteCourse }: CourseCardProps) {
     return (
-      <Card className="w-full transition-shadow duration-200 cursor-pointer hover:shadow-md overflow-hidden" onClick={() => onEditCourse(course)}>
+      <Card className="w-full transition-shadow duration-200 cursor-pointer hover:shadow-md overflow-hidden">
         {/* Colored top section */}
         <div 
           className="h-24 w-full"
