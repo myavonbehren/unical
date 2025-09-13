@@ -241,11 +241,25 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
                 throw new Error('Authentication required')
             }
 
+            // First verify the course belongs to the user through semester ownership
+            const { data: course } = await supabase
+                .from('courses')
+                .select(`
+                    id,
+                    semester:semesters!inner(user_id)
+                `)
+                .eq('id', id)
+                .eq('semester.user_id', user.id)
+                .single()
+
+            if (!course) {
+                throw new Error('Course not found or access denied')
+            }
+
             const { error } = await supabase
                 .from('courses')
                 .update(updates)
                 .eq('id', id)
-                .eq('semester_id', supabase.from('semesters').select('id').eq('user_id', user.id))
 
             if (error) throw error
 
@@ -267,11 +281,25 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
                 throw new Error('Authentication required')
             }
 
+            // First verify the course belongs to the user through semester ownership
+            const { data: course } = await supabase
+                .from('courses')
+                .select(`
+                    id,
+                    semester:semesters!inner(user_id)
+                `)
+                .eq('id', id)
+                .eq('semester.user_id', user.id)
+                .single()
+
+            if (!course) {
+                throw new Error('Course not found or access denied')
+            }
+
             const { error } = await supabase
                 .from('courses')
                 .delete()
                 .eq('id', id)
-                .eq('semester_id', supabase.from('semesters').select('id').eq('user_id', user.id))
 
             if (error) throw error
 
