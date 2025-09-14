@@ -6,6 +6,7 @@ import {
   DashboardPageContent, 
   DashboardPageTitle 
 } from '@/app/shared/layout/dashboard';
+import { UploadZone } from '@/app/shared/components/UploadZone';
 
 export default function UploadPage() {
   return (
@@ -15,8 +16,8 @@ export default function UploadPage() {
       </DashboardPageHeader>
       
       <DashboardPageContent>
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Upload page coming soon...</p>
+        <div className="text-center pb-4">
+          <UploadZone onFilesSelected={() => {}} onFileRemove={() => {}} />
         </div>
       </DashboardPageContent>
     </DashboardPage>
