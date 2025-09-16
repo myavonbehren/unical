@@ -11,8 +11,16 @@ const customJestConfig = {
     '**/__tests__/**/*.test.ts',
     '**/__tests__/**/*.test.tsx'
   ],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(pdfjs-dist|mammoth)/)',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^pdfjs-dist$': '<rootDir>/__mocks__/pdfjs-dist.js',
+    '^mammoth$': '<rootDir>/__mocks__/mammoth.js',
   },
 }
 
