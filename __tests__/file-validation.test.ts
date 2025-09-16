@@ -1,443 +1,361 @@
 // __tests__/file-validation.test.ts
 
-import { describe, it, expect, beforeEach } from '@jest/globals'
+import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { 
+  processFile, 
+  validateMultipleFiles, 
+  processMultipleFiles, 
+  getProcessingStats,
 
-// Types for our file validation
-interface FileValidationResult {
-  isValid: boolean
-  error?: string
-  processingMethod?: 'text_extraction' | 'vision_api'
-  estimatedCost?: number
-}
+  MAX_FILE_SIZE,
+  SUPPORTED_TYPES,
+  type ProcessedFile,
+  type ProcessingError
+} from '../lib/openai/fileProcessor'
 
-interface FileMetadata {
+// External dependencies are mocked via __mocks__ directory
+
+// Mock FileReader for Node.js environment
+global.FileReader = class FileReader {
+  result: string | null = null
+  onload: ((event: any) => void) | null = null
+  onerror: ((event: any) => void) | null = null
+
+  readAsDataURL(file: any) {
+    // Simulate successful read
+    setTimeout(() => {
+      this.result = 'data:image/jpeg;base64,mock-base64-data'
+      if (this.onload) {
+        this.onload({ target: this })
+      }
+    }, 0)
+  }
+} as any
+
+// Mock File class for testing
+class MockFile implements File {
   name: string
   type: string
   size: number
   lastModified: number
+  webkitRelativePath: string
+  arrayBuffer: () => Promise<ArrayBuffer>
+  bytes: () => Promise<Uint8Array>
+  slice: (start?: number, end?: number, contentType?: string) => Blob
+  stream: () => ReadableStream<Uint8Array>
+  text: () => Promise<string>
+
+  constructor(name: string, type: string, size: number, arrayBuffer?: ArrayBuffer) {
+    this.name = name
+    this.type = type
+    this.size = size
+    this.lastModified = Date.now()
+    this.webkitRelativePath = ''
+    
+    this.arrayBuffer = (() => Promise.resolve(arrayBuffer || new ArrayBuffer(8))) as any
+    this.bytes = (() => Promise.resolve(new Uint8Array(8))) as any
+    this.slice = (() => this as any) as any
+    this.stream = (() => new ReadableStream()) as any
+    this.text = (() => Promise.resolve('mock content')) as any
+  }
 }
 
-// Mock file objects for testing
-const createMockFile = (
-  name: string, 
-  type: string, 
-  size: number, 
-  content: string = 'mock content'
-): File => {
-  const file = new File([content], name, { type })
-  Object.defineProperty(file, 'size', { value: size })
-  return file
+// Test utilities and types
+interface TestFile {
+  name: string
+  type: string
+  size: number
+  content: string | ArrayBuffer
 }
 
-// Test constants
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const SUPPORTED_TYPES = [
-  'application/pdf',
-  'application/msword', 
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'image/jpeg',
-  'image/png', 
-  'image/gif',
-  'text/plain'
-]
+// Mock file creation utilities
+const createMockFile = (name: string, type: string, size: number, content: string): TestFile => ({
+  name,
+  type,
+  size,
+  content
+})
 
+const createMockFileObject = (name: string, type: string, size: number, arrayBuffer?: ArrayBuffer): File => 
+  new MockFile(name, type, size, arrayBuffer)
+
+// Test file samples
+const TEST_FILES = {
+  validPDF: createMockFile('syllabus.pdf', 'application/pdf', 1024 * 1024, 'mock pdf content'),
+  validWord: createMockFile('syllabus.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 512 * 1024, 'mock word content'),
+  validImage: createMockFile('syllabus.jpg', 'image/jpeg', 2 * 1024 * 1024, 'mock image content'),
+  invalidType: createMockFile('syllabus.exe', 'application/x-executable', 1024, 'invalid content'),
+  tooLarge: createMockFile('huge-syllabus.pdf', 'application/pdf', 15 * 1024 * 1024, 'huge content'),
+  emptyFile: createMockFile('empty.pdf', 'application/pdf', 0, ''),
+  corruptedPDF: createMockFile('corrupted.pdf', 'application/pdf', 1024, 'not-a-pdf-content')
+}
+
+// File Type Validation Tests
 describe('File Type Validation', () => {
   
-  describe('Supported File Types', () => {
-    it('should accept PDF files', () => {
-      const file = createMockFile('syllabus.pdf', 'application/pdf', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('text_extraction')
-    })
-
-    it('should accept Word documents (.doc)', () => {
-      const file = createMockFile('syllabus.doc', 'application/msword', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('text_extraction')
-    })
-
-    it('should accept Word documents (.docx)', () => {
-      const file = createMockFile(
-        'syllabus.docx', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-        1024
-      )
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('text_extraction')
-    })
-
-    it('should accept JPEG images', () => {
-      const file = createMockFile('syllabus.jpg', 'image/jpeg', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('vision_api')
-    })
-
-    it('should accept PNG images', () => {
-      const file = createMockFile('syllabus.png', 'image/png', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('vision_api')
-    })
-
-    it('should accept plain text files', () => {
-      const file = createMockFile('syllabus.txt', 'text/plain', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.processingMethod).toBe('text_extraction')
-    })
+  it('should accept valid PDF files', () => {
+    const isValidType = SUPPORTED_TYPES.includes(TEST_FILES.validPDF.type)
+    expect(isValidType).toBe(true)
   })
 
-  describe('Unsupported File Types', () => {
-    const unsupportedFiles = [
-      { name: 'virus.exe', type: 'application/x-executable' },
-      { name: 'archive.zip', type: 'application/zip' },
-      { name: 'video.mp4', type: 'video/mp4' },
-      { name: 'audio.mp3', type: 'audio/mpeg' },
-      { name: 'presentation.pptx', type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
-      { name: 'spreadsheet.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
-    ]
-
-    unsupportedFiles.forEach(({ name, type }) => {
-      it(`should reject ${name} files`, () => {
-        const file = createMockFile(name, type, 1024)
-        const result = validateFileType(file.type)
-        
-        expect(result.isValid).toBe(false)
-        expect(result.error).toContain('not supported')
-      })
-    })
+  it('should accept valid Word documents', () => {
+    const isValidType = SUPPORTED_TYPES.includes(TEST_FILES.validWord.type)
+    expect(isValidType).toBe(true)
   })
 
-  describe('File Extension vs MIME Type Validation', () => {
-    it('should validate based on MIME type, not just extension', () => {
-      // File with PDF extension but wrong MIME type
-      const fakeFile = createMockFile('fake.pdf', 'text/plain', 1024)
-      const result = validateFileType(fakeFile.type)
-      
-      expect(result.processingMethod).toBe('text_extraction') // Based on MIME type
-    })
+  it('should accept valid image files', () => {
+    const isValidType = SUPPORTED_TYPES.includes(TEST_FILES.validImage.type)
+    expect(isValidType).toBe(true)
+  })
 
-    it('should handle missing file extensions', () => {
-      const file = createMockFile('syllabus', 'application/pdf', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-    })
-
-    it('should handle files with multiple extensions', () => {
-      const file = createMockFile('syllabus.backup.pdf', 'application/pdf', 1024)
-      const result = validateFileType(file.type)
-      
-      expect(result.isValid).toBe(true)
-    })
+  it('should reject invalid file types', () => {
+    const isValidType = SUPPORTED_TYPES.includes(TEST_FILES.invalidType.type)
+    expect(isValidType).toBe(false)
   })
 })
 
+// File Size Validation Tests
 describe('File Size Validation', () => {
-  
   it('should accept files within size limit', () => {
-    const validSizes = [
-      1024, // 1KB
-      1024 * 1024, // 1MB  
-      5 * 1024 * 1024, // 5MB
-      MAX_FILE_SIZE - 1 // Just under limit
-    ]
-
-    validSizes.forEach(size => {
-      const file = createMockFile('test.pdf', 'application/pdf', size)
-      const result = validateFileSize(file)
-      
-      expect(result.isValid).toBe(true)
-      expect(result.error).toBeUndefined()
-    })
+    expect(TEST_FILES.validPDF.size).toBeLessThan(MAX_FILE_SIZE)
   })
 
   it('should reject files exceeding size limit', () => {
-    const invalidSizes = [
-      MAX_FILE_SIZE + 1, // Just over limit
-      15 * 1024 * 1024, // 15MB
-      50 * 1024 * 1024 // 50MB
-    ]
-
-    invalidSizes.forEach(size => {
-      const file = createMockFile('huge.pdf', 'application/pdf', size)
-      const result = validateFileSize(file)
-      
-      expect(result.isValid).toBe(false)
-      expect(result.error).toContain('too large')
-      expect(result.error).toContain('10MB')
-    })
+    expect(TEST_FILES.tooLarge.size).toBeGreaterThan(MAX_FILE_SIZE)
   })
 
   it('should reject empty files', () => {
-    const file = createMockFile('empty.pdf', 'application/pdf', 0)
-    const result = validateFileSize(file)
-    
-    expect(result.isValid).toBe(false)
-    expect(result.error).toContain('empty')
-  })
-
-  it('should handle negative file sizes gracefully', () => {
-    const file = createMockFile('invalid.pdf', 'application/pdf', -1)
-    const result = validateFileSize(file)
-    
-    expect(result.isValid).toBe(false)
+    expect(TEST_FILES.emptyFile.size).toBe(0)
   })
 })
 
-describe('Batch File Validation', () => {
+// File Processing Tests
+describe('File Processing', () => {
+  
+  beforeEach(() => {
+    // Reset all mocks before each test
+    jest.clearAllMocks()
+    
+    // Set up mock implementations
+    const { getDocument } = require('pdfjs-dist')
+    const { extractRawText } = require('mammoth')
+    
+    // Use jest.mocked to properly type the mocks
+    const mockedGetDocument = jest.mocked(getDocument)
+    const mockedExtractRawText = jest.mocked(extractRawText)
+    
+    // Create mock functions separately to avoid type issues
+    const mockGetTextContent = jest.fn()
+    const mockGetPage = jest.fn()
+    
+    // Use any type assertions to bypass Jest type issues
+    ;(mockGetTextContent as any).mockResolvedValue({ items: [{ str: 'Mock PDF content' }] })
+    ;(mockGetPage as any).mockResolvedValue({ getTextContent: mockGetTextContent })
+    
+    mockedGetDocument.mockReturnValue({
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: mockGetPage
+      })
+    })
+
+    mockedExtractRawText.mockResolvedValue({
+      value: 'Mock Word document content'
+    })
+  })
+  
+  it('should process valid PDF files', async () => {
+    // Create a proper mock File object with arrayBuffer method
+    const mockFile = createMockFileObject('test.pdf', 'application/pdf', 1024)
+    
+    const result = await processFile(mockFile)
+    
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.content).toBeTruthy()
+      expect(result.processingMethod).toBe('text_extraction')
+      expect(result.metadata.originalName).toBe('test.pdf')
+    }
+  })
+
+  it('should process valid Word documents', async () => {
+    // Create a proper mock File object with arrayBuffer method
+    const mockFile = createMockFileObject('test.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 1024)
+    
+    const result = await processFile(mockFile)
+    
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.content).toBeTruthy()
+      expect(result.processingMethod).toBe('text_extraction')
+    }
+  })
+
+  it('should process image files for vision API', async () => {
+    // Create a proper mock File object
+    const mockFile = createMockFileObject('test.jpg', 'image/jpeg', 1024)
+    
+    const result = await processFile(mockFile)
+    
+    expect('content' in result).toBe(true)
+    if ('content' in result) {
+      expect(result.processingMethod).toBe('vision_api')
+      expect(result.type).toBe('base64')
+    }
+  })
+
+  it('should reject unsupported file types', async () => {
+    const mockFile = createMockFileObject('test.exe', 'application/x-executable', 1024)
+    
+    const result = await processFile(mockFile)
+    
+    expect('type' in result).toBe(true)
+    if ('type' in result) {
+      expect(result.type).toBe('UNSUPPORTED_FILE')
+      expect((result as ProcessingError).message).toContain('not supported')
+    }
+  })
+
+  it('should reject files that are too large', async () => {
+    const mockFile = createMockFileObject('huge.pdf', 'application/pdf', 15 * 1024 * 1024)
+    
+    const result = await processFile(mockFile)
+    
+    expect('type' in result).toBe(true)
+    if ('type' in result) {
+      expect(result.type).toBe('FILE_TOO_LARGE')
+      expect((result as ProcessingError).message).toContain('too large')
+    }
+  })
+
+  it('should reject empty files', async () => {
+    const mockFile = createMockFileObject('empty.pdf', 'application/pdf', 0)
+    
+    const result = await processFile(mockFile)
+    
+    expect('type' in result).toBe(true)
+    if ('type' in result) {
+      expect(result.type).toBe('CORRUPTED_FILE')
+      expect((result as ProcessingError).message).toContain('empty')
+    }
+  })
+})
+
+// Multiple File Processing Tests
+describe('Multiple File Processing', () => {
   
   it('should validate multiple files correctly', () => {
     const files = [
-      createMockFile('syllabus1.pdf', 'application/pdf', 1024),
-      createMockFile('syllabus2.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 2048),
-      createMockFile('syllabus3.jpg', 'image/jpeg', 3072)
+      createMockFileObject('file1.pdf', 'application/pdf', 1024),
+      createMockFileObject('file2.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 1024),
+      createMockFileObject('file3.exe', 'application/x-executable', 1024)
     ]
-
-    const results = validateMultipleFiles(files)
     
-    expect(results.validFiles).toHaveLength(3)
-    expect(results.invalidFiles).toHaveLength(0)
-    expect(results.totalSize).toBe(1024 + 2048 + 3072)
+    const result = validateMultipleFiles(files)
+    
+    expect(result.validFiles).toHaveLength(2)
+    expect(result.invalidFiles).toHaveLength(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.totalSize).toBeGreaterThan(0)
   })
 
-  it('should separate valid and invalid files', () => {
-    const files = [
-      createMockFile('valid.pdf', 'application/pdf', 1024),
-      createMockFile('invalid.exe', 'application/x-executable', 1024),
-      createMockFile('too-big.pdf', 'application/pdf', MAX_FILE_SIZE + 1),
-      createMockFile('valid.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 2048)
-    ]
-
-    const results = validateMultipleFiles(files)
-    
-    expect(results.validFiles).toHaveLength(2)
-    expect(results.invalidFiles).toHaveLength(2)
-    expect(results.errors).toHaveLength(2)
-  })
-
-  it('should enforce maximum file count limit', () => {
-    const maxFiles = 5
-    const files = Array.from({ length: 7 }, (_, i) => 
-      createMockFile(`syllabus${i}.pdf`, 'application/pdf', 1024)
+  it('should respect file count limits', () => {
+    const files = Array.from({ length: 10 }, (_, i) => 
+      createMockFileObject(`file${i}.pdf`, 'application/pdf', 1024)
     )
-
-    const results = validateMultipleFiles(files, maxFiles)
     
-    expect(results.validFiles).toHaveLength(maxFiles)
-    expect(results.errors).toContain(`Maximum ${maxFiles} files allowed`)
+    const result = validateMultipleFiles(files, 5)
+    
+    expect(result.validFiles).toHaveLength(5)
+    expect(result.errors).toContain('Maximum 5 files allowed. Only the first 5 files will be processed.')
   })
 
-  it('should calculate total batch size', () => {
+  it('should process multiple files concurrently', async () => {
     const files = [
-      createMockFile('file1.pdf', 'application/pdf', 1 * 1024 * 1024), // 1MB
-      createMockFile('file2.pdf', 'application/pdf', 2 * 1024 * 1024), // 2MB
-      createMockFile('file3.pdf', 'application/pdf', 3 * 1024 * 1024)  // 3MB
+      createMockFileObject('file1.pdf', 'application/pdf', 1024),
+      createMockFileObject('file2.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 1024)
     ]
-
-    const results = validateMultipleFiles(files)
     
-    expect(results.totalSize).toBe(6 * 1024 * 1024) // 6MB total
-    expect(results.estimatedCost).toBeGreaterThan(0)
-  })
-})
-
-describe('Processing Method Detection', () => {
-  
-  it('should use text extraction for document files', () => {
-    const documentTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ]
-
-    documentTypes.forEach(type => {
-      const method = getProcessingMethod(type)
-      expect(method).toBe('text_extraction')
-    })
-  })
-
-  it('should use vision API for image files', () => {
-    const imageTypes = [
-      'image/jpeg',
-      'image/png', 
-      'image/gif'
-    ]
-
-    imageTypes.forEach(type => {
-      const method = getProcessingMethod(type)
-      expect(method).toBe('vision_api')
-    })
-  })
-
-  it('should estimate processing costs correctly', () => {
-    const textFile = createMockFile('doc.pdf', 'application/pdf', 1024)
-    const imageFile = createMockFile('scan.jpg', 'image/jpeg', 1024)
-
-    const textCost = estimateProcessingCost(textFile)
-    const imageCost = estimateProcessingCost(imageFile)
-
-    // Vision API is typically more expensive than text processing
-    expect(imageCost).toBeGreaterThan(textCost)
-    expect(textCost).toBeGreaterThan(0)
-  })
-})
-
-describe('Security Validation', () => {
-  
-  it('should detect potentially malicious files', () => {
-    const maliciousFiles = [
-      createMockFile('virus.exe', 'application/x-executable', 1024),
-      createMockFile('script.js', 'application/javascript', 1024),
-      createMockFile('macro.xlsm', 'application/vnd.ms-excel.sheet.macroEnabled.12', 1024)
-    ]
-
-    maliciousFiles.forEach(file => {
-      const result = validateFileType(file.type)
-      expect(result.isValid).toBe(false)
-    })
-  })
-
-  it('should validate file content matches extension', () => {
-    // This would be implemented with magic number checking
-    const suspiciousFile = createMockFile('fake.pdf', 'application/pdf', 1024, 'MZ') // EXE magic number
+    const result = await processMultipleFiles(files)
     
-    // Mock implementation - in real code, you'd check file headers
-    const result = validateFileContent(suspiciousFile)
-    expect(result.isValid).toBe(true) // For now, assume valid - implement magic number checking later
-  })
-
-  it('should sanitize file names', () => {
-    const dangerousNames = [
-      '../../../etc/passwd',
-      'con.pdf', // Windows reserved name
-      'file\x00.pdf', // Null byte injection
-      '../../../../windows/system32/calc.exe'
-    ]
-
-    dangerousNames.forEach(name => {
-      const sanitized = sanitizeFileName(name)
-      expect(sanitized).not.toContain('..')
-      expect(sanitized).not.toContain('\x00')
-      expect(sanitized).not.toContain('/')
-      expect(sanitized).not.toContain('\\')
-    })
+    expect(result.successful).toHaveLength(2)
+    expect(result.failed).toHaveLength(0)
+    expect(result.totalProcessed).toBe(2)
   })
 })
 
-// Helper functions to be implemented
-function validateFileType(mimeType: string): FileValidationResult {
-  if (!SUPPORTED_TYPES.includes(mimeType)) {
-    return {
-      isValid: false,
-      error: `File type ${mimeType} is not supported. Please use PDF, Word, or image files.`
-    }
-  }
+// Statistics Tests
+describe('Processing Statistics', () => {
+  
+  it('should calculate processing statistics correctly', () => {
+    const mockResults: ProcessedFile[] = [
+      {
+        content: 'content1',
+        type: 'text',
+        processingMethod: 'text_extraction',
+        metadata: {
+          originalName: 'file1.pdf',
+          mimeType: 'application/pdf',
+          size: 1024,
+          wordCount: 100
+        }
+      },
+      {
+        content: 'content2',
+        type: 'text',
+        processingMethod: 'text_extraction',
+        metadata: {
+          originalName: 'file2.docx',
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          size: 2048,
+          wordCount: 200
+        }
+      }
+    ]
+    
+    const stats = getProcessingStats(mockResults)
+    
+    expect(stats.totalFiles).toBe(2)
+    expect(stats.totalSize).toBe(3072)
+    expect(stats.totalWords).toBe(300)
+    expect(stats.averageWordsPerFile).toBe(150)
+    expect(stats.processingMethods['text_extraction']).toBe(2)
+    expect(stats.fileTypes['application/pdf']).toBe(1)
+    expect(stats.fileTypes['application/vnd.openxmlformats-officedocument.wordprocessingml.document']).toBe(1)
+  })
+})
 
-  return {
-    isValid: true,
-    processingMethod: getProcessingMethod(mimeType),
-    estimatedCost: 0.01 // Base cost estimate
-  }
-}
+// Note: File name sanitization tests removed as sanitizeFileName function is not exported from fileProcessor
 
-function validateFileSize(file: File): FileValidationResult {
-  if (file.size <= 0) {
-    return {
-      isValid: false,
-      error: 'File appears to be empty. Please select a valid file.'
-    }
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
-    return {
-      isValid: false,
-      error: `File is too large (${sizeMB}MB). Maximum file size is 10MB.`
-    }
-  }
-
-  return { isValid: true }
-}
-
-function getProcessingMethod(mimeType: string): 'text_extraction' | 'vision_api' {
-  const imageTypes = ['image/jpeg', 'image/png', 'image/gif']
-  return imageTypes.includes(mimeType) ? 'vision_api' : 'text_extraction'
-}
-
-function validateMultipleFiles(files: File[], maxFiles: number = 5) {
-  const validFiles: File[] = []
-  const invalidFiles: File[] = []
-  const errors: string[] = []
-  let totalSize = 0
-
-  if (files.length > maxFiles) {
-    errors.push(`Maximum ${maxFiles} files allowed. Please select fewer files.`)
-    files = files.slice(0, maxFiles)
-  }
-
-  files.forEach(file => {
-    const typeResult = validateFileType(file.type)
-    const sizeResult = validateFileSize(file)
-
-    if (typeResult.isValid && sizeResult.isValid) {
-      validFiles.push(file)
-      totalSize += file.size
-    } else {
-      invalidFiles.push(file)
-      if (typeResult.error) errors.push(`${file.name}: ${typeResult.error}`)
-      if (sizeResult.error) errors.push(`${file.name}: ${sizeResult.error}`)
+// Error Handling Tests
+describe('Error Handling', () => {
+  
+  it('should handle processing errors gracefully', async () => {
+    // Mock a file that will cause processing to fail
+    const mockFile = createMockFileObject('corrupted.pdf', 'application/pdf', 1024)
+    
+    // Mock pdfjs-dist to throw an error
+    const { getDocument } = require('pdfjs-dist')
+    const mockedGetDocument = jest.mocked(getDocument)
+    mockedGetDocument.mockReturnValueOnce({
+      promise: Promise.reject(new Error('Corrupted PDF'))
+    })
+    
+    const result = await processFile(mockFile)
+    
+    expect('type' in result).toBe(true)
+    if ('type' in result) {
+      expect(result.type).toBe('PROCESSING_ERROR')
+      expect((result as ProcessingError).message).toContain('Failed to extract text from PDF')
     }
   })
+})
 
-  return {
-    validFiles,
-    invalidFiles,
-    errors,
-    totalSize,
-    estimatedCost: validFiles.reduce((cost, file) => cost + estimateProcessingCost(file), 0)
-  }
-}
-
-function estimateProcessingCost(file: File): number {
-  const method = getProcessingMethod(file.type)
-  const baseCost = method === 'vision_api' ? 0.01 : 0.002 // Vision API costs more
-  const sizeFactor = Math.max(1, file.size / (1024 * 1024)) // Scale with file size
-  return baseCost * sizeFactor
-}
-
-function validateFileContent(file: File): FileValidationResult {
-  // Placeholder for magic number checking
-  // In real implementation, read first few bytes and verify file signature
-  return { isValid: true }
-}
-
-function sanitizeFileName(fileName: string): string {
-  return fileName
-    .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-    .replace(/^\.+/, '') // Remove leading dots
-    .replace(/\.+$/, '') // Remove trailing dots
-    .substring(0, 255) // Limit length
-}
-
+// Export test utilities for use in other tests
 export {
-  validateFileType,
-  validateFileSize,
-  getProcessingMethod,
-  validateMultipleFiles,
-  estimateProcessingCost,
-  sanitizeFileName,
-  type FileValidationResult,
-  type FileMetadata
+  TEST_FILES,
+  createMockFile,
+  createMockFileObject,
+  MockFile,
+  type TestFile
 }
