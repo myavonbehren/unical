@@ -1,11 +1,18 @@
 // lib/ai/fileProcessor.ts
 
-import * as pdfjsLib from 'pdfjs-dist'
 import mammoth from 'mammoth'
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// Dynamic import for PDF.js to avoid server-side issues
+let pdfjsLib: typeof import('pdfjs-dist') | null = null
 
+async function getPdfJs() {
+  if (typeof window !== 'undefined' && !pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist')
+    // Don't set workerSrc - let PDF.js handle it automatically
+    // This will use the default behavior which should work in most cases
+  }
+  return pdfjsLib
+}
 // Types for file processing
 export interface ProcessedFile {
   content: string
@@ -182,11 +189,16 @@ async function extractTextFromPDF(file: File): Promise<{
   metadata: Partial<ProcessedFile['metadata']>
 }> {
   try {
+    const pdfjs = await getPdfJs()
+    if (!pdfjs) {
+      throw new Error('PDF.js not available in this environment')
+    }
+
     // Convert file to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer()
     
     // Load PDF document
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
     
     let fullText = ''
     const pageCount = pdf.numPages
@@ -198,6 +210,7 @@ async function extractTextFromPDF(file: File): Promise<{
       
       // Combine text items from the page
       const pageText = textContent.items
+        .filter((item): item is any => 'str' in item)
         .map((item: any) => item.str)
         .join(' ')
       
