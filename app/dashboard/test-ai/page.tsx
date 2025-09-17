@@ -18,7 +18,8 @@ import {
   Clock,
   Download
 } from 'lucide-react'
-import { processFile, type ProcessingError } from '@/lib/openai/fileProcessor'
+import { processFile, type ProcessingError, type ProcessedFile } from '@/lib/openai/fileProcessor'
+import type { ParsedSyllabusData, AssignmentWithDate, WeekConversionResult } from '@/lib/openai/syllabusParser'
 
 interface TestResult {
   step: string
@@ -37,6 +38,38 @@ interface ProcessingResults {
     totalTime: number
     cost: number
   }
+}
+
+// Type guards for safe data access
+function isProcessedFile(data: unknown): data is ProcessedFile {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'content' in data &&
+    'metadata' in data &&
+    typeof (data as any).metadata === 'object' &&
+    'wordCount' in (data as any).metadata
+  )
+}
+
+function isParsedSyllabusData(data: unknown): data is ParsedSyllabusData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'course_info' in data &&
+    'assignments' in data &&
+    Array.isArray((data as any).assignments)
+  )
+}
+
+function isWeekConversionResult(data: unknown): data is WeekConversionResult {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'assignments' in data &&
+    'totalConverted' in data &&
+    Array.isArray((data as any).assignments)
+  )
 }
 
 export default function AITestPage() {
@@ -82,9 +115,10 @@ export default function AITestPage() {
       const processedFileResult = await processFile(selectedFile) // This runs in browser
       const fileProcessDuration = Date.now() - fileProcessStartTime
       
-      if ('type' in processedFileResult) {
+      if ('type' in processedFileResult && (processedFileResult.type === 'UNSUPPORTED_FILE' || processedFileResult.type === 'CORRUPTED_FILE' || processedFileResult.type === 'PROCESSING_ERROR' || processedFileResult.type === 'FILE_TOO_LARGE')) {
         const error = processedFileResult as ProcessingError
-        throw new Error(`File processing failed: ${error.message}`)
+        console.log('Processing error:', error)
+        throw new Error(`File processing failed: ${error.message || 'Unknown error'}`)
       }
 
       // At this point, we know it's a ProcessedFile, not a ProcessingError
@@ -321,7 +355,7 @@ export default function AITestPage() {
                   {results.fileProcessing && (
                     <p className="text-sm text-muted-foreground">
                       {results.fileProcessing.success 
-                        ? `${results.fileProcessing.data?.metadata?.wordCount || 0} words extracted`
+                        ? `${isProcessedFile(results.fileProcessing.data) ? results.fileProcessing.data.metadata.wordCount : 0} words extracted`
                         : results.fileProcessing.error
                       }
                     </p>
@@ -340,7 +374,7 @@ export default function AITestPage() {
                   {results.openAIParsing && (
                     <p className="text-sm text-muted-foreground">
                       {results.openAIParsing.success 
-                        ? `${results.openAIParsing.data?.assignments?.length || 0} assignments found`
+                        ? `${isParsedSyllabusData(results.openAIParsing.data) ? results.openAIParsing.data.assignments.length : 0} assignments found`
                         : results.openAIParsing.error
                       }
                     </p>
@@ -359,7 +393,7 @@ export default function AITestPage() {
                   {results.weekConversion && (
                     <p className="text-sm text-muted-foreground">
                       {results.weekConversion.success 
-                        ? `${results.weekConversion.data?.totalConverted || 0} weeks converted`
+                        ? `${isWeekConversionResult(results.weekConversion.data) ? results.weekConversion.data.totalConverted : 0} weeks converted`
                         : results.weekConversion.error
                       }
                     </p>
@@ -411,7 +445,7 @@ export default function AITestPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Course Info */}
-            {results.openAIParsing.data.course_info && (
+            {isParsedSyllabusData(results.openAIParsing.data) && results.openAIParsing.data.course_info && (
               <div>
                 <h3 className="font-semibold mb-2">Course Information</h3>
                 <div className="bg-muted p-3 rounded-lg space-y-1">
@@ -427,13 +461,13 @@ export default function AITestPage() {
             )}
 
             {/* Assignments */}
-            {results.weekConversion?.success && results.weekConversion.data.assignments && (
+            {results.weekConversion?.success && isWeekConversionResult(results.weekConversion.data) && results.weekConversion.data.assignments && (
               <div>
                 <h3 className="font-semibold mb-2">
                   Assignments ({results.weekConversion.data.assignments.length})
                 </h3>
                 <div className="space-y-2">
-                  {results.weekConversion.data.assignments.map((assignment: { title: string; due_date: string; original_week?: number; type: string }, index: number) => (
+                  {results.weekConversion.data.assignments.map((assignment: AssignmentWithDate, index: number) => (
                     <div key={index} className="bg-muted p-3 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
