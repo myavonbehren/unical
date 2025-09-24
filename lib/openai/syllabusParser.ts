@@ -363,6 +363,8 @@ Examples:
 * "Quiz 1 in week 2" → extract as week: 2
 * "Midterm exam week 8" → extract as week: 8
 * "September 15: Essay due" → extract as specific\_date: "2024-09-15"
+* Week 1 - Submit Discussion 1 
+* Week Four - Quiz 1
 
 Extract the following information:
 
@@ -377,7 +379,7 @@ Extract the following information:
 2. **ASSIGNMENTS, QUIZZES, AND READINGS**:
    For each, extract:
 
-   * Title (e.g., “Assignment 1: …”, “Quiz 2”, “Read: Chapter 3”)
+   * Title (e.g., “Assignment 1: …”, “Quiz 2”, “Read: Chapter 3”, "Submit Discussion 1")
    * Week number (if mentioned)
    * Specific date (if given instead of week)
    * Type: homework, exam, project, quiz, reading, lab, discussion, deadline
