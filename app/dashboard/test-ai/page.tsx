@@ -137,7 +137,7 @@ export default function AITestPage() {
       // Step 2: Send processed text to API
       addLog('Step 2: Parsing with OpenAI...')
       
-      const openAIResponse = await fetch('/api/test/parse-syllabus', {
+      const openAIResponse = await fetch('/api/test/parse-syllabus-gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
