@@ -473,8 +473,16 @@ export default function AITestPage() {
                         <div className="flex-1">
                           <p className="font-medium">{assignment.title}</p>
                           <p className="text-sm text-muted-foreground">
-                            Due: {new Date(assignment.due_date).toLocaleDateString()}
-                            {assignment.original_week && ` (Week ${assignment.original_week})`}
+                            {assignment.due_date ? (
+                              <>
+                                Due: {new Date(assignment.due_date).toLocaleDateString()}
+                                {assignment.original_week && ` (Week ${assignment.original_week})`}
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-red-500">No date specified - needs review</span>
+                              </>
+                            )}
                           </p>
                         </div>
                         <Badge variant="outline">{assignment.type}</Badge>
