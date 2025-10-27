@@ -1,39 +1,18 @@
 // lib/ai/fileProcessor.ts
 
 import mammoth from 'mammoth'
-import { initializePdfJs } from './pdfjs-setup'
 
 // Dynamic import for PDF.js to avoid server-side issues
 let pdfjsLib: typeof import('pdfjs-dist') | null = null
 
 async function getPdfJs() {
-  if (typeof window === 'undefined') {
-    throw new Error('PDF processing only available in browser')
+  if (typeof window !== 'undefined' && !pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist')
+    // Don't set workerSrc - let PDF.js handle it automatically
+    // This will use the default behavior which should work in most cases
   }
-  
-  // Initialize PDF.js if not already done
-  await initializePdfJs()
-  
-  const pdfjsLib = await import('pdfjs-dist')
-  
-  console.log('PDF.js version:', pdfjsLib.version)
-  console.log('Worker source:', pdfjsLib.GlobalWorkerOptions.workerSrc)
-  
   return pdfjsLib
 }
-
-/**
- * Test if the PDF.js worker is accessible
- */
-async function testWorkerAccessibility(workerSrc: string): Promise<boolean> {
-  try {
-    const response = await fetch(workerSrc, { method: 'HEAD' })
-    return response.ok
-  } catch {
-    return false
-  }
-}
-
 // Types for file processing
 export interface ProcessedFile {
   content: string
@@ -202,46 +181,30 @@ async function extractText(file: File): Promise<{
   }
 }
 
+/**
+ * Extract text from PDF files using PDF.js
+ */
 async function extractTextFromPDF(file: File): Promise<{
   text: string
   metadata: Partial<ProcessedFile['metadata']>
 }> {
   try {
-    console.log('Starting PDF processing...')
-    
-    // Get PDF.js dynamically
     const pdfjs = await getPdfJs()
     if (!pdfjs) {
       throw new Error('PDF.js not available in this environment')
     }
 
-    // Worker should already be initialized by initializePdfJs()
-    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-      throw new Error('PDF.js worker not properly initialized. Please refresh the page and try again.')
-    }
-    
-    console.log('Worker source confirmed:', pdfjs.GlobalWorkerOptions.workerSrc)
-
     // Convert file to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer()
-    console.log('ArrayBuffer created, size:', arrayBuffer.byteLength)
     
-    // Load PDF document with explicit worker
-    console.log('Loading PDF document...')
-    const loadingTask = pdfjs.getDocument({
-      data: arrayBuffer,
-      verbosity: 0 // Reduce console noise
-    })
-    
-    const pdf = await loadingTask.promise
-    console.log('PDF loaded successfully, pages:', pdf.numPages)
+    // Load PDF document
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
     
     let fullText = ''
     const pageCount = pdf.numPages
     
     // Extract text from each page
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      console.log(`Processing page ${pageNum}/${pageCount}`)
       const page = await pdf.getPage(pageNum)
       const textContent = await page.getTextContent()
       
@@ -256,7 +219,6 @@ async function extractTextFromPDF(file: File): Promise<{
     
     // Clean up the extracted text
     const cleanedText = cleanExtractedText(fullText)
-    console.log('PDF processing complete, text length:', cleanedText.length)
     
     return {
       text: cleanedText,
@@ -266,24 +228,10 @@ async function extractTextFromPDF(file: File): Promise<{
     }
     
   } catch (error) {
-    console.error('PDF processing error:', error)
-    
-    // Provide more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes('workerSrc')) {
-        throw new Error('PDF.js worker not properly configured. Please try refreshing the page.')
-      } else if (error.message.includes('Invalid PDF')) {
-        throw new Error('The uploaded file appears to be corrupted or not a valid PDF.')
-      } else if (error.message.includes('password')) {
-        throw new Error('This PDF is password-protected and cannot be processed.')
-      } else {
-        throw new Error(`Failed to extract text from PDF: ${error.message}`)
-      }
-    } else {
-      throw new Error('Failed to extract text from PDF: Unknown error occurred')
-    }
+    throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
+
 /**
  * Extract text from Word documents using Mammoth.js
  */

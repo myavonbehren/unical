@@ -2,7 +2,6 @@
 
 import type { ProcessedFile } from './fileProcessor'
 import { openai } from './client'
-import gemini from '../gemini/client'
 
 // Types for syllabus parsing
 export interface ParsedSyllabusData {
@@ -58,7 +57,7 @@ export interface WeekConversionResult {
 
 export interface AssignmentWithDate {
   title: string
-  due_date: string | null // ISO date string
+  due_date: string // ISO date string
   original_week?: number
   original_specific_date?: string
   type: ParsedAssignment['type']
@@ -356,7 +355,7 @@ function generateSystemPrompt(includeSchedule: boolean = false): string {
   return `You are an expert syllabus parsing assistant. Your job is to extract structured data from academic syllabi and return it as valid JSON.
 
 CRITICAL FEATURE - Week Number Extraction:
-When you see assignments, quizzes, readings, or events referenced by week numbers (e.g., "Week 3", "Week 7"), preserve these week numbers exactly. The system will later convert and calculate actual dates from week numbers using the semester start date. If Week Zero or Week 0 is mentioned, treet it as Week 1.
+When you see assignments, quizzes, readings, or events referenced by week numbers (e.g., "Week 3", "Week 7"), preserve these week numbers exactly. The system will later convert and calculate actual dates from week numbers using the semester start date.
 
 Examples:
 
@@ -364,8 +363,6 @@ Examples:
 * "Quiz 1 in week 2" → extract as week: 2
 * "Midterm exam week 8" → extract as week: 8
 * "September 15: Essay due" → extract as specific\_date: "2024-09-15"
-* Week 1 - Submit Discussion 1 
-* Week Four - Quiz 1
 
 Extract the following information:
 
@@ -380,7 +377,7 @@ Extract the following information:
 2. **ASSIGNMENTS, QUIZZES, AND READINGS**:
    For each, extract:
 
-   * Title (e.g., “Assignment 1: …”, “Quiz 2”, “Read: Chapter 3”, "Submit Discussion 1", "Quiz 1: Syllabus", "Assignment 0:")
+   * Title (e.g., “Assignment 1: …”, “Quiz 2”, “Read: Chapter 3”)
    * Week number (if mentioned)
    * Specific date (if given instead of week)
    * Type: homework, exam, project, quiz, reading, lab, discussion, deadline
@@ -474,10 +471,13 @@ function validateParsingResponse(data: any): { isValid: boolean; errors: string[
     errors.push('Missing course name')
   }
 
-  // Validate assignments array - ALLOW null weeks now
+  // Validate assignments array
   if (data.assignments && Array.isArray(data.assignments)) {
     data.assignments.forEach((assignment: any, index: number) => {
       if (!assignment.title) errors.push(`Assignment ${index}: missing title`)
+      if (!assignment.week && !assignment.specific_date) {
+        errors.push(`Assignment ${index}: missing week or specific_date`)
+      }
       if (!assignment.type) errors.push(`Assignment ${index}: missing type`)
     })
   } else if (data.assignments) {
@@ -521,7 +521,7 @@ export function convertWeeksToDate(
     if (assignment.specific_date) {
       // Use specific date if provided
       dueDate = assignment.specific_date
-    } else if (assignment.week && assignment.week > 0) {
+    } else if (assignment.week) {
       // Convert week number to actual date (YOUR INNOVATION!)
       const weekStartDate = new Date(startDate)
       const daysToAdd = (assignment.week - 1) * 7

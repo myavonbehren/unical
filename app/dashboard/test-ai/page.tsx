@@ -137,7 +137,7 @@ export default function AITestPage() {
       // Step 2: Send processed text to API
       addLog('Step 2: Parsing with OpenAI...')
       
-      const openAIResponse = await fetch('/api/test/parse-syllabus-gemini', {
+      const openAIResponse = await fetch('/api/test/parse-syllabus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -473,16 +473,8 @@ export default function AITestPage() {
                         <div className="flex-1">
                           <p className="font-medium">{assignment.title}</p>
                           <p className="text-sm text-muted-foreground">
-                            {assignment.due_date ? (
-                              <>
-                                Due: {new Date(assignment.due_date).toLocaleDateString()}
-                                {assignment.original_week && ` (Week ${assignment.original_week})`}
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-red-500">No date specified - needs review</span>
-                              </>
-                            )}
+                            Due: {new Date(assignment.due_date).toLocaleDateString()}
+                            {assignment.original_week && ` (Week ${assignment.original_week})`}
                           </p>
                         </div>
                         <Badge variant="outline">{assignment.type}</Badge>

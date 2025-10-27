@@ -17,11 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/app/shared/components/ui/dropdown-menu'
+import SemesterDialog from '../courses/(ui)/add-courses-modal'
+import type { Semester } from '@/app/dashboard/(logic)/types/database'
 
 export default function SemestersPage() {
   // Use simple store
   const { semesters, loading, error, fetchSemesters } = useAcademicStore()
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingSemester, setEditingSemester] = useState<Semester | null>(null)
 
   // Fetch on mount only
   useEffect(() => {
@@ -39,15 +42,26 @@ export default function SemestersPage() {
     })
   }
 
-  const handleEdit = (semester: any) => {
-    // TODO: Implement edit functionality
+  const handleEdit = (semester: Semester) => {
+    setEditingSemester(semester)
+    setIsDialogOpen(true)
+  }
+
+  const handleAdd = () => {
+    setEditingSemester(null)
+    setIsDialogOpen(true)
+  }
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false)
+    setEditingSemester(null)
   }
 
   const handleDelete = (semesterId: string) => {
     // TODO: Implement delete functionality
   }
 
-  const handleClick = (semester: any) => {
+  const handleClick = (semester: Semester) => {
     // TODO: Navigate to courses page
   }
 
@@ -91,7 +105,7 @@ export default function SemestersPage() {
       <DashboardPage>
         <DashboardPageHeader>
           <DashboardPageTitle>Semesters</DashboardPageTitle>
-          <Button onClick={() => setIsAddModalOpen(true)}>Add Semester</Button>
+          <Button onClick={handleAdd}>Add Semester</Button>
         </DashboardPageHeader>
         <DashboardPageContent>
           <div className="text-center py-8">
@@ -106,7 +120,7 @@ export default function SemestersPage() {
     <DashboardPage>
       <DashboardPageHeader>
         <DashboardPageTitle>Semesters</DashboardPageTitle>
-        <Button onClick={() => setIsAddModalOpen(true)}>Add Semester</Button>
+        <Button onClick={handleAdd}>Add Semester</Button>
       </DashboardPageHeader>
 
       <DashboardPageContent>
@@ -166,32 +180,11 @@ export default function SemestersPage() {
           ))}
         </div>
 
-        {/* Simple Add Modal Placeholder */}
-        {isAddModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
-              <h2 className="text-lg font-semibold mb-4">Add New Semester</h2>
-              <p className="text-muted-foreground mb-4">
-                Add semester functionality will be implemented here.
-              </p>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1"
-                >
-                  Add Semester
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Semester Dialog */}
+        <SemesterDialog
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+        />
       </DashboardPageContent>
     </DashboardPage>
   )
