@@ -61,7 +61,6 @@ export default function SemestersPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        editingSemester={editingSemester}
       />
     </DashboardPage>
   )
