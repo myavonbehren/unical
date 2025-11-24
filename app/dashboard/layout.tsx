@@ -1,30 +1,36 @@
 "use client";
 
+import React from 'react';
 import { SideNav, MobileSideNav, SidebarProvider, useSidebar } from '@/app/shared/layout/dashboard';
 import Header from '../shared/layout/Header';
 import { useEffect } from 'react';
-import { useStoreInitializer } from './(logic)/store/storeInitializer';
 import { spacingClasses } from '@/app/shared/design-tokens/spacing';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { isCollapsed, isMobile, setIsMobile } = useSidebar();
-  const { initializeStores } = useStoreInitializer();
+  const [isClient, setIsClient] = React.useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
+  // Ensure we're on the client side before doing window operations
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const checkMobile = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-    };
+    }
+  }, [setIsMobile]);
+
+  useEffect(() => {
+    if (!isClient) return;
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [setIsMobile]);
+  }, [checkMobile, isClient]);
 
-  // Initialize Zustand stores when dashboard loads
-  useEffect(() => {
-    initializeStores();
-  }, [initializeStores]);
+  // No store initialization - stores will be initialized on-demand
 
   return (
     <div className="h-screen flex overflow-hidden">

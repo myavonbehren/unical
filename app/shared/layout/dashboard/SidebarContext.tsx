@@ -15,9 +15,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
+  const toggleSidebar = React.useCallback(() => {
+    setIsCollapsed(prev => !prev);
+  }, []);
+
+  const setIsMobileStable = React.useCallback((mobile: boolean) => {
+    setIsMobile(mobile);
+  }, []);
 
   // Update collapsed state when mobile state changes
   React.useEffect(() => {
@@ -28,15 +32,15 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isMobile]);
 
+  const contextValue = React.useMemo(() => ({
+    isCollapsed,
+    toggleSidebar,
+    isMobile,
+    setIsMobile: setIsMobileStable,
+  }), [isCollapsed, toggleSidebar, isMobile, setIsMobileStable]);
+
   return (
-    <SidebarContext.Provider
-      value={{
-        isCollapsed,
-        toggleSidebar,
-        isMobile,
-        setIsMobile,
-      }}
-    >
+    <SidebarContext.Provider value={contextValue}>
       {children}
     </SidebarContext.Provider>
   );

@@ -8,6 +8,14 @@ import {
 } from '@/app/shared/layout/dashboard';
 import { UploadZone } from '@/app/shared/components/UploadZone';
 
+const handleFilesSelected = (files: File[]) => {
+  console.log(files)
+}
+
+const handleFileRemove = (fileId: string) => {
+  console.log(fileId)
+}
+
 export default function UploadPage() {
   return (
     <DashboardPage>
@@ -17,7 +25,7 @@ export default function UploadPage() {
       
       <DashboardPageContent>
         <div className="text-center pb-4">
-          <UploadZone onFilesSelected={() => {}} onFileRemove={() => {}} />
+          <UploadZone onFilesSelected={handleFilesSelected} onFileRemove={handleFileRemove} />
         </div>
       </DashboardPageContent>
     </DashboardPage>
